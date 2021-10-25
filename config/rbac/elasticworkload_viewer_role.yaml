@@ -1,0 +1,20 @@
+# permissions for end users to view elasticworkloads.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: elasticworkload-viewer-role
+rules:
+- apiGroups:
+  - io.yue9944882.my.domain
+  resources:
+  - elasticworkloads
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - io.yue9944882.my.domain
+  resources:
+  - elasticworkloads/status
+  verbs:
+  - get

@@ -1,0 +1,24 @@
+# permissions for end users to edit elasticworkloads.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: elasticworkload-editor-role
+rules:
+- apiGroups:
+  - io.yue9944882.my.domain
+  resources:
+  - elasticworkloads
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - io.yue9944882.my.domain
+  resources:
+  - elasticworkloads/status
+  verbs:
+  - get

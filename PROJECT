@@ -1,0 +1,16 @@
+domain: my.domain
+layout:
+- go.kubebuilder.io/v3
+projectName: elastic-workload
+repo: github.com/yue9944882/elastic-workload
+resources:
+- api:
+    crdVersion: v1
+    namespaced: true
+  controller: true
+  domain: apps
+  group: io.yue9944882
+  kind: ElasticWorkload
+  path: github.com/yue9944882/elastic-workload/api/v1
+  version: v1
+version: "3"
