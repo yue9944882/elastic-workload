@@ -38,3 +38,5 @@ status:
   manifestWorks: ...
 
 ```
+
+samples [here](./config/samples/elasticworkload.yaml)
