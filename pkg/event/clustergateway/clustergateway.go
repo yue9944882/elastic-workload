@@ -106,12 +106,11 @@ func (c *clusterGatewaySource) Subscribe(gvr schema.GroupVersionResource, nsn ty
 func (c *clusterGatewaySource) Unsubscribe(gvr schema.GroupVersionResource, nsn types.NamespacedName, clusterNames ...string) error {
 	c.lock.Lock()
 	defer c.lock.Unlock()
-	if cancel, ok := c.cancels[gvr]; ok {
-		cancel()
+	_, ok := c.active[gvr]
+	if !ok {
+		return nil
 	}
 	c.active[gvr].unsubscribe(nsn, clusterNames...)
-	delete(c.cancels, gvr)
-	delete(c.active, gvr)
 	return nil
 }
 
@@ -171,10 +170,12 @@ func (p replicasPoller) subscribe(nsn types.NamespacedName, clusterNames ...stri
 func (p replicasPoller) unsubscribe(nsn types.NamespacedName, clusterNames ...string) {
 	p.rwLock.Lock()
 	defer p.rwLock.Unlock()
-	delete(p.watching, nsn)
-	delete(p.observed, nsn)
 	for _, cluster := range clusterNames {
 		p.ref.unset(cluster, nsn)
+	}
+	if len(p.ref.listClusters(nsn)) == 0 {
+		delete(p.watching, nsn)
+		delete(p.observed, nsn)
 	}
 }
 
@@ -186,7 +187,7 @@ func (p replicasPoller) get(nsn types.NamespacedName) (int, bool) {
 }
 
 func (p replicasPoller) run(ctx context.Context) {
-	_ = wait.PollImmediateUntil(time.Second*5, func() (bool, error) {
+	err := wait.PollImmediateUntil(time.Second*5, func() (bool, error) {
 		p.rwLock.RLock()
 		defer p.rwLock.RUnlock()
 		for nsn := range p.watching {
@@ -205,6 +206,7 @@ func (p replicasPoller) run(ctx context.Context) {
 						"name", nsn.Name)
 					continue
 				}
+				log.Info("===", "rs", s.Status.Replicas)
 				changed := p.observed[nsn] != int(s.Status.Replicas)
 				p.observed[nsn] = int(s.Status.Replicas)
 				if changed {
@@ -216,6 +218,7 @@ func (p replicasPoller) run(ctx context.Context) {
 		}
 		return false, nil
 	}, ctx.Done())
+	log.Error(err, "poller aborted")
 }
 
 type refCounts struct {
@@ -231,7 +234,7 @@ func (c *refCounts) set(cluster string, nsn types.NamespacedName) {
 	if !ok {
 		c.index[key] = sets.NewString(cluster)
 	} else {
-		clusters.Delete(cluster)
+		clusters.Insert(cluster)
 	}
 }
 

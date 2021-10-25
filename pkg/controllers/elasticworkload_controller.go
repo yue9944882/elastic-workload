@@ -154,7 +154,7 @@ func (r *ElasticWorkloadReconciler) Reconcile(ctx context.Context, req ctrl.Requ
 		if !toScale.Has(clusterName) {
 			continue
 		}
-		scaler(&obj, distribution[clusterName])
+		scaler(&obj, workload.Spec.SpokeNamespace, req.Name, distribution[clusterName])
 		manifest := &v1.ManifestWork{
 			ObjectMeta: metav1.ObjectMeta{
 				Namespace: clusterName,
